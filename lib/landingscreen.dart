@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'addincome.dart';
-import 'addexpenses.dart'; 
+import 'addexpenses.dart';
+import 'addincome.dart'; 
 
 class FinancialTrackerScreen extends StatefulWidget {
   const FinancialTrackerScreen({super.key});
@@ -123,13 +123,13 @@ class _FinancialTrackerScreenState extends State<FinancialTrackerScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildRoundedButton('Add Income', Colors.green, onPressed: () {
+                _buildRoundedButton('Add Expenses', Colors.green, onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const AddIncomeScreen()),
                   );
                 }),
-                _buildRoundedButton('Add Expenses', Colors.green, onPressed: () {
+                _buildRoundedButton('Add Income', Colors.green, onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const AddExpensesScreen()),
