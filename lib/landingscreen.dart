@@ -10,53 +10,15 @@ class FinancialTrackerScreen extends StatefulWidget {
 }
 
 class _FinancialTrackerScreenState extends State<FinancialTrackerScreen> {
-  final TextEditingController _incomeController = TextEditingController();
-  final TextEditingController _balanceController = TextEditingController();
-
-  String? selectedStartMonth;
-  String? selectedStartDay;
-  String? selectedStartYear;
-  String? selectedEndMonth;
-  String? selectedEndDay;
-  String? selectedEndYear;
-
-  List<Map<String, dynamic>> expenses = [];
+  double totalIncome = 0.0;
   double totalExpense = 0.0;
 
-  @override
-  void dispose() {
-    _incomeController.dispose();
-    _balanceController.dispose();
-    super.dispose();
-  }
-
-  void _addExpense(String date, String detail, double amount) {
-    setState(() {
-      expenses.add({
-        'date': date,
-        'detail': detail,
-        'amount': amount,
-      });
-
-      // Update total expenses and balance
-      totalExpense = expenses.fold(0.0, (sum, expense) => sum + expense['amount']);
-      double income = double.tryParse(_incomeController.text) ?? 0.0;
-      _balanceController.text = (income - totalExpense).toStringAsFixed(2);
-    });
-  }
-
-  void _addIncome(double income) {
-    setState(() {
-      double currentIncome = double.tryParse(_incomeController.text) ?? 0.0;
-      _incomeController.text = (currentIncome + income).toStringAsFixed(2);
-
-      // Update balance after adding income
-      _balanceController.text = (currentIncome + income - totalExpense).toStringAsFixed(2);
-    });
-  }
+  List<Map<String, dynamic>> expenses = [];
 
   @override
   Widget build(BuildContext context) {
+    double balance = totalIncome - totalExpense;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F5E4),
       appBar: AppBar(
@@ -82,27 +44,11 @@ class _FinancialTrackerScreenState extends State<FinancialTrackerScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: _buildDatePickerSection(
-                    title: 'Start Date',
-                    selectedMonth: selectedStartMonth,
-                    selectedDay: selectedStartDay,
-                    selectedYear: selectedStartYear,
-                    onMonthChanged: (value) => setState(() => selectedStartMonth = value),
-                    onDayChanged: (value) => setState(() => selectedStartDay = value),
-                    onYearChanged: (value) => setState(() => selectedStartYear = value),
-                  ),
+                  child: _buildDatePickerSection(title: 'Start Date'),
                 ),
-                const SizedBox(width: 16.0), // Spacer between the two sections
+                const SizedBox(width: 16.0),
                 Expanded(
-                  child: _buildDatePickerSection(
-                    title: 'End Date',
-                    selectedMonth: selectedEndMonth,
-                    selectedDay: selectedEndDay,
-                    selectedYear: selectedEndYear,
-                    onMonthChanged: (value) => setState(() => selectedEndMonth = value),
-                    onDayChanged: (value) => setState(() => selectedEndDay = value),
-                    onYearChanged: (value) => setState(() => selectedEndYear = value),
-                  ),
+                  child: _buildDatePickerSection(title: 'End Date'),
                 ),
               ],
             ),
@@ -110,14 +56,34 @@ class _FinancialTrackerScreenState extends State<FinancialTrackerScreen> {
 
             // Income and Balance
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Income:'),
-                const SizedBox(width: 8.0),
-                _buildTextField(_incomeController, hint: 'Income'),
-                const SizedBox(width: 16.0),
-                const Text('Balance:'),
-                const SizedBox(width: 8.0),
-                _buildTextField(_balanceController, hint: 'Balance', readOnly: true),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Income:',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    Text(
+                      '₱ ${totalIncome.toStringAsFixed(2)}',
+                      style: const TextStyle(fontSize: 16, color: Colors.green),
+                    ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Balance:',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    Text(
+                      '₱ ${balance.toStringAsFixed(2)}',
+                      style: const TextStyle(fontSize: 16, color: Colors.blue),
+                    ),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: 16.0),
@@ -179,7 +145,12 @@ class _FinancialTrackerScreenState extends State<FinancialTrackerScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => AddExpensesScreen(
-                        onAddExpense: _addExpense,
+                        onAddExpense: (date, detail, amount) {
+                          setState(() {
+                            expenses.add({'date': date, 'detail': detail, 'amount': amount});
+                            totalExpense += amount;
+                          });
+                        },
                       ),
                     ),
                   );
@@ -189,7 +160,11 @@ class _FinancialTrackerScreenState extends State<FinancialTrackerScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => AddIncomeScreen(
-                        onAddIncome: _addIncome,
+                        onAddIncome: (income) {
+                          setState(() {
+                            totalIncome += income;
+                          });
+                        },
                       ),
                     ),
                   );
@@ -203,41 +178,18 @@ class _FinancialTrackerScreenState extends State<FinancialTrackerScreen> {
   }
 
   // Helper: Date Picker Section Builder
-  Widget _buildDatePickerSection({
-    required String title,
-    required String? selectedMonth,
-    required String? selectedDay,
-    required String? selectedYear,
-    required ValueChanged<String?> onMonthChanged,
-    required ValueChanged<String?> onDayChanged,
-    required ValueChanged<String?> onYearChanged,
-  }) {
+  Widget _buildDatePickerSection({required String title}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         Row(
           children: [
-            _buildDropdown(
-              hint: 'Month',
-              value: selectedMonth,
-              items: List.generate(12, (i) => '${i + 1}'),
-              onChanged: onMonthChanged,
-            ),
+            _buildDropdown(hint: 'Month', items: List.generate(12, (i) => '${i + 1}')),
             const SizedBox(width: 8.0),
-            _buildDropdown(
-              hint: 'Day',
-              value: selectedDay,
-              items: List.generate(31, (i) => '${i + 1}'),
-              onChanged: onDayChanged,
-            ),
+            _buildDropdown(hint: 'Day', items: List.generate(31, (i) => '${i + 1}')),
             const SizedBox(width: 8.0),
-            _buildDropdown(
-              hint: 'Year',
-              value: selectedYear,
-              items: List.generate(10, (i) => '${DateTime.now().year - i}'),
-              onChanged: onYearChanged,
-            ),
+            _buildDropdown(hint: 'Year', items: List.generate(10, (i) => '${DateTime.now().year - i}')),
           ],
         ),
       ],
@@ -247,12 +199,9 @@ class _FinancialTrackerScreenState extends State<FinancialTrackerScreen> {
   // Helper: Dropdown Builder
   Widget _buildDropdown({
     required String hint,
-    required String? value,
     required List<String> items,
-    required ValueChanged<String?> onChanged,
   }) {
     return DropdownButton<String>(
-      value: value,
       hint: Text(hint),
       items: items.map((item) {
         return DropdownMenuItem<String>(
@@ -260,23 +209,7 @@ class _FinancialTrackerScreenState extends State<FinancialTrackerScreen> {
           child: Text(item),
         );
       }).toList(),
-      onChanged: onChanged,
-    );
-  }
-
-  // Helper: TextField Builder
-  Widget _buildTextField(TextEditingController controller,
-      {required String hint, bool readOnly = false}) {
-    return SizedBox(
-      width: 120,
-      child: TextField(
-        controller: controller,
-        readOnly: readOnly,
-        decoration: InputDecoration(
-          hintText: hint,
-          border: const OutlineInputBorder(),
-        ),
-      ),
+      onChanged: (_) {},
     );
   }
 

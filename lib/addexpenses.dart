@@ -10,9 +10,12 @@ class AddExpensesScreen extends StatefulWidget {
 }
 
 class _AddExpensesScreenState extends State<AddExpensesScreen> {
-  final TextEditingController _dateController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _detailController = TextEditingController();
+
+  String? selectedMonth;
+  String? selectedDay;
+  String? selectedYear;
 
   @override
   Widget build(BuildContext context) {
@@ -27,23 +30,100 @@ class _AddExpensesScreenState extends State<AddExpensesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Date:'),
-            TextField(
-              controller: _dateController,
-              decoration: const InputDecoration(hintText: 'Enter Date (MM/DD/YYYY)'),
+            const Text(
+              'Date:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    hint: const Text('Month'),
+                    value: selectedMonth,
+                    items: List.generate(12, (index) => '${index + 1}')
+                        .map((month) => DropdownMenuItem(
+                              value: month,
+                              child: Text(month),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedMonth = value;
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8.0),
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    hint: const Text('Day'),
+                    value: selectedDay,
+                    items: List.generate(31, (index) => '${index + 1}')
+                        .map((day) => DropdownMenuItem(
+                              value: day,
+                              child: Text(day),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedDay = value;
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8.0),
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    hint: const Text('Year'),
+                    value: selectedYear,
+                    items: List.generate(10, (index) => '${DateTime.now().year - index}')
+                        .map((year) => DropdownMenuItem(
+                              value: year,
+                              child: Text(year),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedYear = value;
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 10),
-            const Text('Amount:'),
+            const Text(
+              'Amount:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             TextField(
               controller: _amountController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(hintText: 'Enter Amount'),
+              decoration: const InputDecoration(
+                hintText: 'Enter Amount',
+                border: OutlineInputBorder(),
+              ),
             ),
             const SizedBox(height: 10),
-            const Text('Details:'),
+            const Text(
+              'Details:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             TextField(
               controller: _detailController,
-              decoration: const InputDecoration(hintText: 'Enter Details'),
+              decoration: const InputDecoration(
+                hintText: 'Enter Details',
+                border: OutlineInputBorder(),
+              ),
             ),
             const SizedBox(height: 20),
             Row(
@@ -64,7 +144,9 @@ class _AddExpensesScreenState extends State<AddExpensesScreen> {
                 ElevatedButton(
                   onPressed: () {
                     // Validate inputs
-                    if (_dateController.text.isEmpty ||
+                    if (selectedMonth == null ||
+                        selectedDay == null ||
+                        selectedYear == null ||
                         _amountController.text.isEmpty ||
                         _detailController.text.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -75,7 +157,7 @@ class _AddExpensesScreenState extends State<AddExpensesScreen> {
                       return;
                     }
 
-                    final String date = _dateController.text;
+                    final String date = '$selectedMonth/$selectedDay/$selectedYear';
                     final String detail = _detailController.text;
                     final double amount = double.tryParse(_amountController.text) ?? 0.0;
 
